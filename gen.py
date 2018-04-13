@@ -10,6 +10,7 @@ import tempfile
 from netaddr import IPNetwork
 
 wanted_aut = (
+            ('microsoft', r'Microsoft'),
             ('ovh',       r'OVH\s*,\s*FR'),
             ('uk-bt',     r'BTnet UK Regional network'),
             ('uk-bskyb',  r'BSKYB-BROADBAND-AS\s*,\s*GB'),
