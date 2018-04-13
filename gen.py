@@ -109,8 +109,8 @@ def download(url, dest):
     headers = {}
     try:
         headers['If-Modified-Since'] = to_date(os.path.getmtime(dest))
-    except Exception as _:
-        pass
+    except Exception as e:
+        print("Couldn't send last modified, ignoring:", e)
 
     printf('Checking {}... '.format(url))
     r = requests.get(url, stream=True, headers=headers)
@@ -148,7 +148,7 @@ def from_date(header):
 
 def to_date(timestamp):
     from email.utils import formatdate
-    return formatdate(timeval=timestamp, localtime=False, usegmt=True)
+    return formatdate(timeval=timestamp, localtime=True, usegmt=True)
 
 
 def printf(msg):
