@@ -4,12 +4,16 @@ import collections
 import json
 import os
 import re
-import requests
 import tempfile
+from typing import Iterator, List
 
+import dns.resolver
+import requests
 from netaddr import IPNetwork
 
 wanted_aut = (
+            ('alibaba',   r'Alibaba'),
+            ('google',    r'Google'),
             ('microsoft', r'Microsoft'),
             ('ovh',       r'OVH\s*,\s*FR'),
             ('uk-bt',     r'BTnet UK Regional network'),
@@ -29,19 +33,8 @@ def main():
     download('http://thyme.apnic.net/current/data-used-autnums',
              'cache/thyme-autnums')
 
-    aws = collections.defaultdict(set)
-    with open('cache/aws-ranges.json') as f:
-        for obj in json.load(f)['prefixes']:
-            if 'EC2' != obj['service']:
-                continue
-            aws[obj['region']].add(obj['ip_prefix'])
-
-    for (region, ips) in aws.items():
-        assert '/' not in region
-        with open('ip-whitelist.d/aws-ec2-{}.lst'.format(region), 'w') as f:
-            write_out(f, ips)
-
-    del aws
+    do_aws()
+    do_google()
 
     wanted_re = [(k, re.compile(v)) for (k, v) in wanted_aut]
     line_re = re.compile(r'\s*(\d+)\s+(.*)')
@@ -76,6 +69,46 @@ def main():
             write_out(f, ips)
 
     print('Done!')
+
+
+def do_aws():
+    aws = collections.defaultdict(set)
+    with open('cache/aws-ranges.json') as f:
+        for obj in json.load(f)['prefixes']:
+            if 'EC2' != obj['service']:
+                continue
+            aws[obj['region']].add(obj['ip_prefix'])
+    for (region, ips) in aws.items():
+        assert '/' not in region
+        with open('ip-whitelist.d/aws-ec2-{}.lst'.format(region), 'w') as f:
+            write_out(f, ips)
+
+
+def spf_parts(host: str) -> Iterator[str]:
+    for record in dns.resolver.query(host, dns.rdatatype.TXT):
+        for string in record.strings:
+            yield from re.split(r'\s+', string.decode('utf-8'))
+
+
+def spf_ips(host: str) -> Iterator[str]:
+    for record in spf_parts(host):
+        if 'v=spf1' == record:
+            continue
+        elif record.startswith('include:'):
+            yield from spf_ips(record[len('include:'):])
+        elif record in ['?all', '~all']:
+            continue
+        elif record.startswith('ip4:'):
+            yield record[len('ip4:'):]
+        elif record.startswith('ip6:'):
+            yield record[len('ip6:'):]
+        else:
+            raise Exception("unexpected token: " + record)
+
+
+def do_google():
+    with open('ip-whitelist.d/google-gce.lst', 'w') as f:
+        write_out(f, list(spf_ips('_cloud-netblocks.googleusercontent.com')))
 
 
 def write_out(f, ips):
