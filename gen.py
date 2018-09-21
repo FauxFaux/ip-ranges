@@ -24,7 +24,7 @@ wanted_aut = (
 
 
 def main():
-    os.makedirs('cache')
+    os.makedirs('cache', exist_ok=True)
     download('https://ip-ranges.amazonaws.com/ip-ranges.json',
              'cache/aws-ranges.json')
 
