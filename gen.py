@@ -12,9 +12,9 @@ import requests
 from netaddr import IPNetwork
 
 wanted_aut = (
-            ('alibaba',   r'Alibaba'),
-            ('google',    r'Google'),
-            ('microsoft', r'Microsoft'),
+            ('alibaba',   r'(?i)Alibaba'),
+            ('google',    r'(?i)Google'),
+            ('microsoft', r'(?i)Microsoft'),
             ('ovh',       r'OVH\s*,\s*FR'),
             ('uk-bt',     r'BTnet UK Regional network'),
             ('uk-bskyb',  r'BSKYB-BROADBAND-AS\s*,\s*GB'),
