@@ -9,7 +9,7 @@ from typing import Iterator, List
 
 import dns.resolver
 import requests
-from netaddr import IPNetwork
+from netaddr import IPNetwork, IPSet
 
 wanted_aut = (
             ('alibaba',   r'(?i)Alibaba'),
@@ -131,12 +131,8 @@ def simplify(ips):
     Remove duplicates and entirely overlapping blocks,
     and sort by "version"
     """
-    blocks = sorted((IPNetwork(ip) for ip in ips), key=lambda ip: ip.prefixlen)
-    existing = []
-    for block in blocks:
-        if not any_contain(existing, block):
-            existing.append(block)
-    return sorted(existing)
+    nets = IPSet(ips)
+    return sorted(nets.iter_cidrs())
 
 
 def download(url, dest):
