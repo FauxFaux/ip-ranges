@@ -7,6 +7,7 @@ import re
 import tempfile
 from typing import Iterator, List
 
+# pythhon3-requests python3-dnspython python3-netaddr
 import dns.resolver
 import requests
 from netaddr import IPNetwork, IPSet
@@ -20,6 +21,7 @@ wanted_aut = (
             ('uk-bskyb',  r'BSKYB-BROADBAND-AS\s*,\s*GB'),
             ('uk-orange', r'ORANGE-PCS\s*,\s*GB'),
             ('uk-virgin', r'NTL\s*,\s*GB'),
+            ('uk-zen',    r'Zen Internet.*GB'),
 )
 
 
@@ -86,7 +88,7 @@ def do_aws():
 
 
 def spf_parts(host: str) -> Iterator[str]:
-    for record in dns.resolver.query(host, dns.rdatatype.TXT):
+    for record in dns.resolver.resolve(host, dns.rdatatype.TXT):
         for string in record.strings:
             yield from re.split(r'\s+', string.decode('utf-8'))
 
